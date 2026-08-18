@@ -18,7 +18,19 @@ async function request(path, options = {}) {
         window.dispatchEvent(new Event('auth_error'));
     }
 
-    const json = await res.json();
+    let json;
+    const contentType = res.headers.get('content-type');
+    if (contentType && contentType.includes('application/json')) {
+        try {
+            json = await res.json();
+        } catch (e) {
+            throw new Error('서버로부터 올바르지 않은 응답이 왔습니다.(JSON 파싱 에러)');
+        }
+    } else {
+        const text = await res.text();
+        throw new Error(`서버 응답 오류 (상태: ${res.status}). Vercel 환경변수 누락 등의 서버 크래시일 수 있습니다. 메시지: ${text.substring(0, 50)}`);
+    }
+
     if (!res.ok) throw new Error(json.error?.message || json.message || '서버 오류가 발생했습니다.');
     return json;
 }

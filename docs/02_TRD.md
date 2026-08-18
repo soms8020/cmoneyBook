@@ -222,6 +222,7 @@ con_money_book/
 - HTTP 상태 코드 준수
 - 페이지네이션: cursor-based 또는 offset-based
 - 에러 응답 표준화
+- **장애 및 예외 파싱 (Vercel 특화)**: 서버 크래시나 환경 변수 누락으로 서버리스 함수 구동이 실패할 경우 API가 HTML 형태의 500 기본 에러("A server error has occurred")를 반환할 수 있으므로, 프론트엔드 HTTP 클라이언트(`client.js`)는 `content-type` 검사를 통해 안전하게 예외를 처리하고 JSON 포맷 파싱 버그(`Unexpected token...`)를 방지해야 합니다.
 
 ### 4.3 응답 포맷
 
@@ -324,6 +325,10 @@ POSTGRES_DATABASE=...
 - **프론트엔드**: Vercel 정적 배포
 - **백엔드**: Vercel Serverless Functions 또는 별도 서버
 - **DB**: Vercel Postgres (이미 통합)
+- **🚨 필수 환경 변수 (Vercel Dashboard 설정)**: 
+  - `POSTGRES_URL`: Neon / Vercel Postgres DB 연결을 위한 Connection String
+  - `JWT_SECRET`: 인증용 토큰 검증 및 암호화를 위한 시크릿 키
+  - **주의 사항**: Vercel 배포 시 `settings > Environment Variables` 환경 변수가 누락될 경우 DB 연결이나 `jsonwebtoken`의 Sign과정에서 프로세스가 강제 크래시되어 500 에러를 반환합니다.
 
 ### 8.2 CI/CD
 - GitHub Actions 기반
