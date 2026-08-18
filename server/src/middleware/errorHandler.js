@@ -7,6 +7,30 @@ export class AppError extends Error {
     }
 }
 
+export class ValidationError extends AppError {
+    constructor(message, details) {
+        super(400, 'VALIDATION_ERROR', message, details);
+    }
+}
+
+export class UnauthorizedError extends AppError {
+    constructor(message) {
+        super(401, 'UNAUTHORIZED', message);
+    }
+}
+
+export class NotFoundError extends AppError {
+    constructor(message) {
+        super(404, 'NOT_FOUND', message);
+    }
+}
+
+export class ConflictError extends AppError {
+    constructor(message) {
+        super(409, 'CONFLICT', message);
+    }
+}
+
 export function errorHandler(err, req, res, next) {
     if (err instanceof AppError) {
         return res.status(err.statusCode).json({
