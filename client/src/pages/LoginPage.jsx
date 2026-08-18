@@ -1,11 +1,11 @@
 import React, { useState } from 'react';
 import { Link, Navigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
-import { useToast } from '../hooks/useToast';
+import { useToast } from '../components/common';
 
 export default function LoginPage() {
     const { login, user, loading } = useAuth();
-    const { toast } = useToast();
+    const toast = useToast();
     const [formData, setFormData] = useState({ email: '', password: '' });
     const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -15,7 +15,7 @@ export default function LoginPage() {
     const handleSubmit = async (e) => {
         e.preventDefault();
         if (!formData.email || !formData.password) {
-            toast('이메일과 비밀번호를 입력해주세요.', 'error');
+            toast.error('이메일과 비밀번호를 입력해주세요.');
             return;
         }
 
@@ -23,10 +23,10 @@ export default function LoginPage() {
         try {
             const success = await login(formData.email, formData.password);
             if (success) {
-                toast('로그인 되었습니다.', 'success');
+                toast.success('로그인 되었습니다.');
             }
         } catch (error) {
-            toast(error.message || '로그인에 실패했습니다.', 'error');
+            toast.error(error.message || '로그인에 실패했습니다.');
         } finally {
             setIsSubmitting(false);
         }

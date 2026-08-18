@@ -1,11 +1,11 @@
 import React, { useState } from 'react';
 import { Link, Navigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
-import { useToast } from '../hooks/useToast';
+import { useToast } from '../components/common';
 
 export default function RegisterPage() {
     const { register, user, loading } = useAuth();
-    const { toast } = useToast();
+    const toast = useToast();
     const [formData, setFormData] = useState({ name: '', email: '', password: '' });
     const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -16,12 +16,12 @@ export default function RegisterPage() {
         e.preventDefault();
 
         if (!formData.name || !formData.email || !formData.password) {
-            toast('모든 필드를 입력해주세요.', 'error');
+            toast.error('모든 필드를 입력해주세요.');
             return;
         }
 
         if (formData.password.length < 6) {
-            toast('비밀번호는 6자 이상이어야 합니다.', 'error');
+            toast.error('비밀번호는 6자 이상이어야 합니다.');
             return;
         }
 
@@ -29,10 +29,10 @@ export default function RegisterPage() {
         try {
             const success = await register(formData.name, formData.email, formData.password);
             if (success) {
-                toast('회원가입이 완료되었습니다.', 'success');
+                toast.success('회원가입이 완료되었습니다.');
             }
         } catch (error) {
-            toast(error.message || '회원가입에 실패했습니다.', 'error');
+            toast.error(error.message || '회원가입에 실패했습니다.');
         } finally {
             setIsSubmitting(false);
         }
