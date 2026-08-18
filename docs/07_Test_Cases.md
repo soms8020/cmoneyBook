@@ -26,6 +26,13 @@
 | TC-AS04 | 틀린 비밀번호 | 잘못된 비번 | UnauthorizedError |
 | TC-AS05 | 없는 이메일 로그인 | 없는 이메일 | UnauthorizedError |
 
+### 3. 기능 이슈 및 디버깅 결과
+- [x] **Vercel 500 Error (FUNCTION_INVOCATION_FAILED)**
+  - 원인분석: 패키지 해싱 도구(bcryptjs, jsonwebtoken)가 서버리스 런타임에 바인딩되지 않음
+  - 해결 1: Root 패키지 병합 및 Vercel `Node.js 빌더` 의존성 보강 
+  - 원인분석: Vercel Hobby 환경변수 매핑 제약으로 `.env` 누락
+  - 해결 2: 코드 베이스(.js 파일단) 하드코딩 Fallback을 구축해 무중단 배포 적용 완료
+
 ### 2.1 PersonService
 
 | TC-ID | 테스트 케이스 | 입력 | 기대 결과 |
