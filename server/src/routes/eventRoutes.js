@@ -7,7 +7,7 @@ const router = Router();
 
 router.get('/', async (req, res, next) => {
     try {
-        const result = await eventService.list({
+        const result = await eventService.list(req.user.id, {
             page: parseInt(req.query.page) || 1,
             limit: parseInt(req.query.limit) || 20,
             personId: req.query.personId,
@@ -26,28 +26,28 @@ router.get('/', async (req, res, next) => {
 
 router.get('/:id', async (req, res, next) => {
     try {
-        const data = await eventService.getById(req.params.id);
+        const data = await eventService.getById(req.user.id, req.params.id);
         res.json({ success: true, data });
     } catch (err) { next(err); }
 });
 
 router.post('/', validate(createEventSchema), async (req, res, next) => {
     try {
-        const data = await eventService.create(req.body);
+        const data = await eventService.create(req.user.id, req.body);
         res.status(201).json({ success: true, data });
     } catch (err) { next(err); }
 });
 
 router.put('/:id', validate(updateEventSchema), async (req, res, next) => {
     try {
-        const data = await eventService.update(req.params.id, req.body);
+        const data = await eventService.update(req.user.id, req.params.id, req.body);
         res.json({ success: true, data });
     } catch (err) { next(err); }
 });
 
 router.delete('/:id', async (req, res, next) => {
     try {
-        const data = await eventService.delete(req.params.id);
+        const data = await eventService.delete(req.user.id, req.params.id);
         res.json({ success: true, data });
     } catch (err) { next(err); }
 });

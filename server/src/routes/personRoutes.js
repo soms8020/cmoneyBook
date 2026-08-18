@@ -8,7 +8,7 @@ const router = Router();
 // 인물 목록 조회
 router.get('/', async (req, res, next) => {
     try {
-        const result = await personService.list({
+        const result = await personService.list(req.user.id, {
             page: parseInt(req.query.page) || 1,
             limit: parseInt(req.query.limit) || 20,
             search: req.query.search,
@@ -23,7 +23,7 @@ router.get('/', async (req, res, next) => {
 // 인물 상세 조회
 router.get('/:id', async (req, res, next) => {
     try {
-        const data = await personService.getById(req.params.id);
+        const data = await personService.getById(req.user.id, req.params.id);
         res.json({ success: true, data });
     } catch (err) { next(err); }
 });
@@ -31,7 +31,7 @@ router.get('/:id', async (req, res, next) => {
 // 인물 등록
 router.post('/', validate(createPersonSchema), async (req, res, next) => {
     try {
-        const data = await personService.create(req.body);
+        const data = await personService.create(req.user.id, req.body);
         res.status(201).json({ success: true, data });
     } catch (err) { next(err); }
 });
@@ -39,7 +39,7 @@ router.post('/', validate(createPersonSchema), async (req, res, next) => {
 // 인물 수정
 router.put('/:id', validate(updatePersonSchema), async (req, res, next) => {
     try {
-        const data = await personService.update(req.params.id, req.body);
+        const data = await personService.update(req.user.id, req.params.id, req.body);
         res.json({ success: true, data });
     } catch (err) { next(err); }
 });
@@ -47,7 +47,7 @@ router.put('/:id', validate(updatePersonSchema), async (req, res, next) => {
 // 인물 삭제
 router.delete('/:id', async (req, res, next) => {
     try {
-        const data = await personService.delete(req.params.id);
+        const data = await personService.delete(req.user.id, req.params.id);
         res.json({ success: true, data });
     } catch (err) { next(err); }
 });

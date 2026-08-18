@@ -9,7 +9,7 @@
 |------|-----|
 | **Base URL** | `/api/v1` |
 | **Content-Type** | `application/json` |
-| **인증** | v1: 없음, v2: JWT |
+| **인증** | Request Header: `Authorization: Bearer <토큰>` |
 
 ### 공통 응답 형식
 ```json
@@ -29,7 +29,41 @@
 
 ---
 
-## 2. 인물 API (Persons)
+## 2. 인증/계정 API (Auth)
+
+| 메서드 | 엔드포인트 | 설명 | 인증 필요 |
+|--------|-----------|------|-----------|
+| POST | `/api/v1/auth/register` | 회원가입 | X |
+| POST | `/api/v1/auth/login` | 로그인 | X |
+| GET | `/api/v1/auth/me` | 현재 내 정보 조회 | O |
+
+### POST /auth/register - Request Body
+| 필드 | 타입 | 필수 | 유효성 |
+|------|------|------|--------|
+| `email` | string | Y | 이메일 형식, 유니크 |
+| `password` | string | Y | 최소 6자 이상 |
+| `name` | string | Y | 1~50자 |
+
+### POST /auth/login - Request Body
+| 필드 | 타입 | 필수 | 유효성 |
+|------|------|------|--------|
+| `email` | string | Y | 이메일 형식 |
+| `password` | string | Y | 필수 |
+
+### 로그인 응답 예시
+```json
+{
+  "success": true,
+  "data": {
+    "user": { "id": "uuid", "email": "a@a.com", "name": "가입자" },
+    "token": "eyJhbGciOiJIUzI1NiIsIn..."
+  }
+}
+```
+
+---
+
+## 3. 인물 API (Persons)
 
 | 메서드 | 엔드포인트 | 설명 |
 |--------|-----------|------|

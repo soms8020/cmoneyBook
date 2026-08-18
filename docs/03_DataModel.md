@@ -7,12 +7,24 @@
 
 ```mermaid
 erDiagram
+    USERS ||--o{ PERSONS : "생성"
+    USERS ||--o{ EVENTS : "생성"
+    USERS ||--o{ GROUPS : "생성"
     PERSONS ||--o{ EVENTS : "관련"
     PERSONS ||--o{ PERSON_GROUPS : "소속"
     GROUPS ||--o{ PERSON_GROUPS : "포함"
 
+    USERS {
+        uuid id PK
+        varchar email "이메일 로그인"
+        varchar password "해싱된 비번"
+        varchar name "사용자 이름"
+        timestamp created_at
+    }
+
     PERSONS {
         uuid id PK
+        uuid user_id FK "사용자 소유"
         varchar name "이름"
         varchar relationship "관계 유형"
         varchar phone "전화번호(선택)"
@@ -23,6 +35,7 @@ erDiagram
 
     EVENTS {
         uuid id PK
+        uuid user_id FK "사용자 소유"
         uuid person_id FK "인물 ID"
         varchar type "경조사 유형"
         varchar direction "지출/수입"
@@ -35,6 +48,7 @@ erDiagram
 
     GROUPS {
         uuid id PK
+        uuid user_id FK "사용자 소유"
         varchar name "그룹명"
         text description "설명(선택)"
         timestamp created_at
@@ -52,11 +66,28 @@ erDiagram
 
 ## 2. 테이블 상세
 
-### 2.1 persons (인물)
+### 2.1 users (사용자)
 
 | 컬럼명 | 타입 | 제약조건 | 설명 |
 |---------|------|----------|------|
 | `id` | UUID | PK, DEFAULT uuid_generate_v4() | 고유 식별자 |
+| `email` | VARCHAR(255) | NOT NULL, UNIQUE | 이메일 아이디 |
+| `password` | VARCHAR(255) | NOT NULL | bcrypt 해싱 암호 |
+| `name` | VARCHAR(50) | NOT NULL | 사용자 이름 |
+| `created_at` | TIMESTAMP | NOT NULL, DEFAULT NOW() | 가입일시 |
+| `updated_at` | TIMESTAMP | NOT NULL, DEFAULT NOW() | 수정일시 |
+
+**인덱스:**
+- `idx_users_email`
+
+---
+
+### 2.2 persons (인물)
+
+| 컬럼명 | 타입 | 제약조건 | 설명 |
+|---------|------|----------|------|
+| `id` | UUID | PK, DEFAULT uuid_generate_v4() | 고유 식별자 |
+| `user_id` | UUID | FK → users.id, NOT NULL | 소유자 (가입자) |
 | `name` | VARCHAR(100) | NOT NULL | 이름 |
 | `relationship` | VARCHAR(50) | NOT NULL | 관계 유형 |
 | `phone` | VARCHAR(20) | NULLABLE | 전화번호 |
@@ -78,14 +109,16 @@ erDiagram
 **인덱스:**
 - `idx_persons_name` - name 검색 최적화
 - `idx_persons_relationship` - 관계별 필터링
+- `idx_persons_user_id` - 사용자별 권한 분리용
 
 ---
 
-### 2.2 events (경조사 내역)
+### 2.3 events (경조사 내역)
 
 | 컬럼명 | 타입 | 제약조건 | 설명 |
 |---------|------|----------|------|
 | `id` | UUID | PK, DEFAULT uuid_generate_v4() | 고유 식별자 |
+| `user_id` | UUID | FK → users.id, NOT NULL | 소유자 (가입자) |
 | `person_id` | UUID | FK → persons.id, NOT NULL | 관련 인물 |
 | `type` | VARCHAR(50) | NOT NULL | 경조사 유형 |
 | `direction` | VARCHAR(10) | NOT NULL, CHECK('SENT','RECEIVED') | 지출/수입 |
@@ -116,6 +149,7 @@ erDiagram
 | `RECEIVED` | 수입 (내가 받은 경조사비) |
 
 **인덱스:**
+- `idx_events_user_id` - 사용자별 권한 분리
 - `idx_events_person_id` - 인물별 조회
 - `idx_events_type` - 유형별 필터링
 - `idx_events_direction` - 지출/수입 필터링
@@ -124,18 +158,19 @@ erDiagram
 
 ---
 
-### 2.3 groups (그룹)
+### 2.4 groups (그룹)
 
 | 컬럼명 | 타입 | 제약조건 | 설명 |
 |---------|------|----------|------|
 | `id` | UUID | PK, DEFAULT uuid_generate_v4() | 고유 식별자 |
-| `name` | VARCHAR(100) | NOT NULL, UNIQUE | 그룹명 |
+| `user_id` | UUID | FK → users.id, NOT NULL | 소유자 (가입자) |
+| `name` | VARCHAR(100) | NOT NULL | 그룹명 |
 | `description` | TEXT | NULLABLE | 설명 |
 | `created_at` | TIMESTAMP | NOT NULL, DEFAULT NOW() | 생성일시 |
 
 ---
 
-### 2.4 person_groups (인물-그룹 매핑)
+### 2.5 person_groups (인물-그룹 매핑)
 
 | 컬럼명 | 타입 | 제약조건 | 설명 |
 |---------|------|----------|------|
@@ -165,9 +200,20 @@ export const eventTypeEnum = pgEnum('event_type', [
 
 export const directionEnum = pgEnum('direction', ['SENT', 'RECEIVED']);
 
+// 사용자 테이블
+export const users = pgTable('users', {
+  id: uuid('id').defaultRandom().primaryKey(),
+  email: varchar('email', { length: 255 }).notNull().unique(),
+  password: varchar('password', { length: 255 }).notNull(),
+  name: varchar('name', { length: 50 }).notNull(),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+  updatedAt: timestamp('updated_at').defaultNow().notNull(),
+});
+
 // 인물 테이블
 export const persons = pgTable('persons', {
   id: uuid('id').defaultRandom().primaryKey(),
+  userId: uuid('user_id').references(() => users.id, { onDelete: 'cascade' }).notNull(),
   name: varchar('name', { length: 100 }).notNull(),
   relationship: relationshipEnum('relationship').notNull(),
   phone: varchar('phone', { length: 20 }),
@@ -179,6 +225,7 @@ export const persons = pgTable('persons', {
 // 경조사 내역 테이블
 export const events = pgTable('events', {
   id: uuid('id').defaultRandom().primaryKey(),
+  userId: uuid('user_id').references(() => users.id, { onDelete: 'cascade' }).notNull(),
   personId: uuid('person_id').references(() => persons.id, {
     onDelete: 'cascade'
   }).notNull(),
@@ -194,7 +241,8 @@ export const events = pgTable('events', {
 // 그룹 테이블
 export const groups = pgTable('groups', {
   id: uuid('id').defaultRandom().primaryKey(),
-  name: varchar('name', { length: 100 }).notNull().unique(),
+  userId: uuid('user_id').references(() => users.id, { onDelete: 'cascade' }).notNull(),
+  name: varchar('name', { length: 100 }).notNull(),
   description: text('description'),
   createdAt: timestamp('created_at').defaultNow().notNull(),
 });
@@ -226,6 +274,7 @@ SELECT
   - COALESCE(SUM(CASE WHEN e.direction = 'SENT' THEN e.amount ELSE 0 END), 0) AS balance
 FROM persons p
 LEFT JOIN events e ON p.id = e.person_id
+WHERE p.user_id = '현재로그인한유저UUID'
 GROUP BY p.id, p.name, p.relationship
 ORDER BY p.name;
 ```
@@ -238,6 +287,7 @@ SELECT
   SUM(amount) AS total_amount,
   COUNT(*) AS event_count
 FROM events
+WHERE user_id = '현재로그인한유저UUID'
 GROUP BY month, direction
 ORDER BY month DESC;
 ```
@@ -252,5 +302,6 @@ SELECT
   MAX(amount) AS max_amount,
   COUNT(*) AS count
 FROM events
+WHERE user_id = '현재로그인한유저UUID'
 GROUP BY type, direction;
 ```

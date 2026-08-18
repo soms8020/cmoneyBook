@@ -16,6 +16,16 @@
 
 ## 2. 백엔드 단위 테스트
 
+### 2.0 AuthService
+
+| TC-ID | 테스트 케이스 | 입력 | 기대 결과 |
+|-------|-------------|------|-----------|
+| TC-AS01 | 회원가입 성공 | 유효한 이메일, 비번, 이름 | 유저 정보 및 토큰 반환 |
+| TC-AS02 | 중복된 이메일 회원가입 | 이미 존재하는 이메일 | ConflictError |
+| TC-AS03 | 로그인 성공 | 올바른 이메일/비번 | 유저 정보 및 토큰 반환 |
+| TC-AS04 | 틀린 비밀번호 | 잘못된 비번 | UnauthorizedError |
+| TC-AS05 | 없는 이메일 로그인 | 없는 이메일 | UnauthorizedError |
+
 ### 2.1 PersonService
 
 | TC-ID | 테스트 케이스 | 입력 | 기대 결과 |
@@ -60,6 +70,16 @@
 ---
 
 ## 3. API 통합 테스트
+
+### 3.0 Auth API
+
+| TC-ID | 메서드 | 경로 | 상태코드 | 검증 |
+|-------|--------|------|----------|------|
+| TC-AA01 | POST | /auth/register | 201 | 유저 생성 및 토큰 반환 |
+| TC-AA02 | POST | /auth/login | 200 | 로그인 성공 및 토큰 반환 |
+| TC-AA03 | POST | /auth/login | 401 | 잘못된 자격증명 에러 |
+| TC-AA04 | GET | /auth/me | 200 | 내 정보 반환 (토큰 포함) |
+| TC-AA05 | GET | /auth/me | 401 | 토큰 없을 시 401 에러 |
 
 ### 3.1 Persons API
 
@@ -128,6 +148,9 @@
 
 | TC-ID | 페이지 | 테스트 케이스 |
 |-------|--------|-------------|
+| TC-PA01 | LoginPage | 폼 렌더링 및 로그인 시도 (토큰 저장) |
+| TC-PA02 | RegisterPage | 폼 렌더링 및 유효성 검사 에러 표시 |
+| TC-PA03 | Auth Protection | 비로그인 시 접근하면 LoginPage로 리다이렉트 |
 | TC-PD01 | DashboardPage | 요약 카드 3개 렌더링 |
 | TC-PD02 | DashboardPage | 최근 내역 표시 |
 | TC-PE01 | EventListPage | 내역 목록 렌더링 |

@@ -5,9 +5,9 @@ import { AppError } from '../middleware/errorHandler.js';
 
 export const personService = {
     // 인물 목록 조회
-    async list({ page = 1, limit = 20, search, relationship, sort = 'name', order = 'asc' }) {
+    async list(userId, { page = 1, limit = 20, search, relationship, sort = 'name', order = 'asc' }) {
         const offset = (page - 1) * limit;
-        const conditions = [];
+        const conditions = [eq(persons.userId, userId)];
 
         if (search) conditions.push(ilike(persons.name, `%${search}%`));
         if (relationship) conditions.push(eq(persons.relationship, relationship));
@@ -46,12 +46,12 @@ export const personService = {
     },
 
     // 인물 상세 조회
-    async getById(id) {
-        const [person] = await db.select().from(persons).where(eq(persons.id, id));
+    async getById(userId, id) {
+        const [person] = await db.select().from(persons).where(and(eq(persons.id, id), eq(persons.userId, userId)));
         if (!person) throw new AppError(404, 'NOT_FOUND', '인물을 찾을 수 없습니다.');
 
         const personEvents = await db.select().from(events)
-            .where(eq(events.personId, id))
+            .where(and(eq(events.personId, id), eq(events.userId, userId)))
             .orderBy(sql`${events.eventDate} DESC`);
 
         const totalSent = personEvents.filter(e => e.direction === 'SENT').reduce((s, e) => s + e.amount, 0);
@@ -67,8 +67,9 @@ export const personService = {
     },
 
     // 인물 등록
-    async create(data) {
+    async create(userId, data) {
         const [person] = await db.insert(persons).values({
+            userId,
             name: data.name,
             relationship: data.relationship,
             phone: data.phone || null,
@@ -78,23 +79,23 @@ export const personService = {
     },
 
     // 인물 수정
-    async update(id, data) {
-        const [existing] = await db.select().from(persons).where(eq(persons.id, id));
+    async update(userId, id, data) {
+        const [existing] = await db.select().from(persons).where(and(eq(persons.id, id), eq(persons.userId, userId)));
         if (!existing) throw new AppError(404, 'NOT_FOUND', '인물을 찾을 수 없습니다.');
 
         const [updated] = await db.update(persons)
             .set({ ...data, updatedAt: new Date() })
-            .where(eq(persons.id, id))
+            .where(and(eq(persons.id, id), eq(persons.userId, userId)))
             .returning();
         return updated;
     },
 
     // 인물 삭제
-    async delete(id) {
-        const [existing] = await db.select().from(persons).where(eq(persons.id, id));
+    async delete(userId, id) {
+        const [existing] = await db.select().from(persons).where(and(eq(persons.id, id), eq(persons.userId, userId)));
         if (!existing) throw new AppError(404, 'NOT_FOUND', '인물을 찾을 수 없습니다.');
 
-        await db.delete(persons).where(eq(persons.id, id));
+        await db.delete(persons).where(and(eq(persons.id, id), eq(persons.userId, userId)));
         return { message: '인물이 삭제되었습니다.' };
     },
 };

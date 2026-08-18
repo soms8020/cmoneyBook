@@ -1,17 +1,35 @@
 const BASE_URL = import.meta.env.VITE_API_BASE_URL || '/api/v1';
 
 async function request(path, options = {}) {
+    const token = localStorage.getItem('token');
+    const headers = { 'Content-Type': 'application/json', ...options.headers };
+    if (token) {
+        headers.Authorization = `Bearer ${token}`;
+    }
+
     const res = await fetch(`${BASE_URL}${path}`, {
-        headers: { 'Content-Type': 'application/json', ...options.headers },
         ...options,
+        headers,
         body: options.body ? JSON.stringify(options.body) : undefined,
     });
+
+    // 만약 상태 코드가 401이면 전역으로 auth_error 이벤트를 발생시켜 로그아웃 처리
+    if (res.status === 401) {
+        window.dispatchEvent(new Event('auth_error'));
+    }
+
     const json = await res.json();
-    if (!res.ok) throw new Error(json.error?.message || '서버 오류가 발생했습니다.');
+    if (!res.ok) throw new Error(json.error?.message || json.message || '서버 오류가 발생했습니다.');
     return json;
 }
 
 export const api = {
+    // Auth
+    auth: {
+        register: (data) => request('/auth/register', { method: 'POST', body: data }),
+        login: (data) => request('/auth/login', { method: 'POST', body: data }),
+        getMe: () => request('/auth/me'),
+    },
     // Persons
     persons: {
         list: (params = {}) => request('/persons?' + new URLSearchParams(params)),

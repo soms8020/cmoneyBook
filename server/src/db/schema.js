@@ -12,9 +12,20 @@ export const eventTypeEnum = pgEnum('event_type', [
 
 export const directionEnum = pgEnum('direction', ['SENT', 'RECEIVED']);
 
+// 사용자 테이블
+export const users = pgTable('users', {
+  id: uuid('id').defaultRandom().primaryKey(),
+  email: varchar('email', { length: 255 }).notNull().unique(),
+  password: varchar('password', { length: 255 }).notNull(),
+  name: varchar('name', { length: 50 }).notNull(),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+  updatedAt: timestamp('updated_at').defaultNow().notNull(),
+});
+
 // 인물 테이블
 export const persons = pgTable('persons', {
   id: uuid('id').defaultRandom().primaryKey(),
+  userId: uuid('user_id').references(() => users.id, { onDelete: 'cascade' }).notNull(),
   name: varchar('name', { length: 100 }).notNull(),
   relationship: relationshipEnum('relationship').notNull(),
   phone: varchar('phone', { length: 20 }),
@@ -26,6 +37,7 @@ export const persons = pgTable('persons', {
 // 경조사 내역 테이블
 export const events = pgTable('events', {
   id: uuid('id').defaultRandom().primaryKey(),
+  userId: uuid('user_id').references(() => users.id, { onDelete: 'cascade' }).notNull(),
   personId: uuid('person_id').references(() => persons.id, { onDelete: 'cascade' }).notNull(),
   type: eventTypeEnum('type').notNull(),
   direction: directionEnum('direction').notNull(),
@@ -39,7 +51,8 @@ export const events = pgTable('events', {
 // 그룹 테이블
 export const groups = pgTable('groups', {
   id: uuid('id').defaultRandom().primaryKey(),
-  name: varchar('name', { length: 100 }).notNull().unique(),
+  userId: uuid('user_id').references(() => users.id, { onDelete: 'cascade' }).notNull(),
+  name: varchar('name', { length: 100 }).notNull(),
   description: text('description'),
   createdAt: timestamp('created_at').defaultNow().notNull(),
 });

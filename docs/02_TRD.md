@@ -27,7 +27,8 @@
 │  │          Express.js Router                   │ │
 │  │  ┌──────────┐ ┌──────────┐ ┌────────────┐  │ │
 │  │  │Controller│ │Middleware │ │ Validator  │  │ │
-│  │  └──────────┘ └──────────┘ └────────────┘  │ │
+│  │  └──────────┘ │ (Auth)   │ └────────────┘  │ │
+│  │               └──────────┘                 │ │
 │  │  ┌─────────────────────────────────────────┐ │ │
 │  │  │          Service Layer                  │ │ │
 │  │  └─────────────────────────────────────────┘ │ │
@@ -77,7 +78,12 @@ con_money_book/
 │   │   │   ├── dashboard/      # 대시보드 컴포넌트
 │   │   │   └── layout/         # 레이아웃 컴포넌트
 │   │   ├── hooks/              # 커스텀 Hooks
+│   │   │   ├── useAuth.js      # 인증 훅
+│   │   ├── contexts/           # 전역 상태 (Context API)
+│   │   │   └── AuthContext.jsx # 로그인 상태 공유
 │   │   ├── pages/              # 페이지 컴포넌트
+│   │   │   ├── LoginPage.jsx
+│   │   │   ├── RegisterPage.jsx
 │   │   │   ├── DashboardPage.jsx
 │   │   │   ├── EventListPage.jsx
 │   │   │   ├── EventFormPage.jsx
@@ -99,10 +105,12 @@ con_money_book/
 ├── server/                     # Node.js 백엔드
 │   ├── src/
 │   │   ├── controllers/        # 컨트롤러
+│   │   │   ├── authController.js
 │   │   │   ├── eventController.js
 │   │   │   ├── personController.js
 │   │   │   └── statsController.js
 │   │   ├── services/           # 비즈니스 로직
+│   │   │   ├── authService.js
 │   │   │   ├── eventService.js
 │   │   │   ├── personService.js
 │   │   │   └── statsService.js
@@ -111,10 +119,12 @@ con_money_book/
 │   │   │   ├── index.js        # DB 연결
 │   │   │   └── migrations/     # 마이그레이션 파일
 │   │   ├── middleware/         # 미들웨어
+│   │   │   ├── authHandler.js  # JWT 인증 미들웨어
 │   │   │   ├── errorHandler.js
 │   │   │   ├── validator.js
 │   │   │   └── cors.js
 │   │   ├── routes/             # 라우트 정의
+│   │   │   ├── authRoutes.js
 │   │   │   ├── eventRoutes.js
 │   │   │   ├── personRoutes.js
 │   │   │   └── statsRoutes.js
@@ -136,9 +146,9 @@ con_money_book/
 ### 3.1 React 설정
 - **빌드 도구**: Vite 5+
 - **React 버전**: React 18+
-- **라우팅**: React Router v6
-- **상태 관리**: React Context + useReducer (초기), 필요시 Zustand
-- **HTTP 클라이언트**: fetch API (네이티브)
+- **라우팅**: React Router v6 (Protected Routes 설정)
+- **상태 관리**: Context API (Auth 관련), 커스텀 훅
+- **HTTP 클라이언트**: fetch API + 인증 인터셉터 패턴
 
 ### 3.2 반응형 디자인 브레이크포인트
 
@@ -200,11 +210,14 @@ con_money_book/
 ### 4.1 Express 설정
 - **Node.js**: v20 LTS+
 - **Express**: v4.18+
+- **보안 및 인증**: jsonwebtoken (JWT), bcryptjs (비밀번호 해싱)
 - **유효성 검증**: Zod
 - **에러 핸들링**: 커스텀 에러 클래스 + 글로벌 핸들러
 
 ### 4.2 API 설계 원칙
 - RESTful 설계
+- JWT를 `Authorization: Bearer <token>` 헤더로 처리
+- 사용자 격리(Multi-tenant): 조회·수정 시 항상 `req.user.id` 활용
 - JSON 응답 포맷 통일
 - HTTP 상태 코드 준수
 - 페이지네이션: cursor-based 또는 offset-based

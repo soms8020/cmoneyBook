@@ -4,7 +4,9 @@ import personRoutes from './routes/personRoutes.js';
 import eventRoutes from './routes/eventRoutes.js';
 import groupRoutes from './routes/groupRoutes.js';
 import statsRoutes from './routes/statsRoutes.js';
+import authRoutes from './routes/authRoutes.js';
 import { errorHandler } from './middleware/errorHandler.js';
+import { authenticate } from './middleware/authHandler.js';
 
 const app = express();
 
@@ -17,10 +19,11 @@ app.use(cors({
 app.use(express.json());
 
 // Routes
-app.use('/api/v1/persons', personRoutes);
-app.use('/api/v1/events', eventRoutes);
-app.use('/api/v1/groups', groupRoutes);
-app.use('/api/v1/stats', statsRoutes);
+app.use('/api/v1/auth', authRoutes);
+app.use('/api/v1/persons', authenticate, personRoutes);
+app.use('/api/v1/events', authenticate, eventRoutes);
+app.use('/api/v1/groups', authenticate, groupRoutes);
+app.use('/api/v1/stats', authenticate, statsRoutes);
 
 // Health check
 app.get('/api/health', (req, res) => {

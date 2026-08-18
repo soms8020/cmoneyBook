@@ -4,8 +4,8 @@ import { eq, sql, and } from 'drizzle-orm';
 
 export const statsService = {
     // 대시보드 요약
-    async summary(year) {
-        const conditions = [];
+    async summary(userId, year) {
+        const conditions = [eq(events.userId, userId)];
         if (year) conditions.push(sql`EXTRACT(YEAR FROM ${events.eventDate}::date) = ${year}`);
         const where = conditions.length > 0 ? and(...conditions) : undefined;
 
@@ -26,7 +26,7 @@ export const statsService = {
     },
 
     // 월별 통계
-    async monthly(year) {
+    async monthly(userId, year) {
         const targetYear = year || new Date().getFullYear();
         const data = await db.select({
             month: sql`TO_CHAR(${events.eventDate}::date, 'YYYY-MM')`.as('month'),
@@ -36,7 +36,7 @@ export const statsService = {
             receivedCount: sql`COUNT(CASE WHEN ${events.direction} = 'RECEIVED' THEN 1 END)::int`,
         })
             .from(events)
-            .where(sql`EXTRACT(YEAR FROM ${events.eventDate}::date) = ${targetYear}`)
+            .where(and(sql`EXTRACT(YEAR FROM ${events.eventDate}::date) = ${targetYear}`, eq(events.userId, userId)))
             .groupBy(sql`TO_CHAR(${events.eventDate}::date, 'YYYY-MM')`)
             .orderBy(sql`TO_CHAR(${events.eventDate}::date, 'YYYY-MM')`);
 
@@ -44,7 +44,7 @@ export const statsService = {
     },
 
     // 관계별 통계
-    async byRelationship() {
+    async byRelationship(userId) {
         const data = await db.select({
             relationship: persons.relationship,
             totalSent: sql`COALESCE(SUM(CASE WHEN ${events.direction} = 'SENT' THEN ${events.amount} ELSE 0 END), 0)::int`,
@@ -53,13 +53,14 @@ export const statsService = {
         })
             .from(events)
             .innerJoin(persons, eq(events.personId, persons.id))
+            .where(eq(events.userId, userId))
             .groupBy(persons.relationship);
 
         return data;
     },
 
     // 유형별 통계
-    async byType() {
+    async byType(userId) {
         const data = await db.select({
             type: events.type,
             avgAmount: sql`ROUND(AVG(${events.amount}))::int`,
@@ -68,20 +69,21 @@ export const statsService = {
             count: sql`COUNT(*)::int`,
         })
             .from(events)
+            .where(eq(events.userId, userId))
             .groupBy(events.type);
 
         return data;
     },
 
     // 추천 금액
-    async recommendation({ personId, type, relationship }) {
+    async recommendation(userId, { personId, type, relationship }) {
         let avgByType = 0;
         let avgByRelationship = 0;
         let previousWithPerson = 0;
 
         if (type) {
             const [r] = await db.select({ avg: sql`COALESCE(ROUND(AVG(${events.amount})), 0)::int` })
-                .from(events).where(eq(events.type, type));
+                .from(events).where(and(eq(events.type, type), eq(events.userId, userId)));
             avgByType = r?.avg || 0;
         }
 
@@ -89,14 +91,14 @@ export const statsService = {
             const [r] = await db.select({ avg: sql`COALESCE(ROUND(AVG(${events.amount})), 0)::int` })
                 .from(events)
                 .innerJoin(persons, eq(events.personId, persons.id))
-                .where(eq(persons.relationship, relationship));
+                .where(and(eq(persons.relationship, relationship), eq(events.userId, userId)));
             avgByRelationship = r?.avg || 0;
         }
 
         if (personId) {
             const [r] = await db.select({ avg: sql`COALESCE(ROUND(AVG(${events.amount})), 0)::int` })
                 .from(events)
-                .where(and(eq(events.personId, personId), eq(events.direction, 'RECEIVED')));
+                .where(and(eq(events.personId, personId), eq(events.direction, 'RECEIVED'), eq(events.userId, userId)));
             previousWithPerson = r?.avg || 0;
         }
 
