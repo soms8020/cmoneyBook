@@ -328,6 +328,9 @@ POSTGRES_DATABASE=...
 - **⚡ 환경 변수 로드 (vercel.json)**: 
   - Vercel 플랫폼 대시보드 권한 및 설정 제약을 우회하기 위해 `vercel.json`의 `env` 블록을 통하여 시스템 필수 변수(`POSTGRES_URL`, `JWT_SECRET`)를 런타임에 직접 주입하도록 구성되어 있습니다.
   - 이 설정을 통해 깃허브에 코드를 병합하는 즉시 데이터베이스 커넥션 및 JWT 암호화 키가 500 에러 없이 자동 할당됩니다.
+- **📦 의존성 모듈 패키징 정책**:
+  - Vercel의 Serverless Function 빌더(`@vercel/node`)는 `api/index.js` 기반으로 빌드 시 **프로젝트 루트의 `package.json`**을 참조하여 모듈을 번들링합니다.
+  - 백엔드에 새로운 라이브러리(`jsonwebtoken`, `bcryptjs` 등)를 추가할 경우, 반드시 `server/package.json` 뿐만 아니라 **최상단 루트 폴더의 `package.json` 의 `dependencies`에도 명시**해야만 배포 시 500 에러(`FUNCTION_INVOCATION_FAILED`)를 방지할 수 있습니다.
 
 ### 8.2 CI/CD
 - GitHub Actions 기반
