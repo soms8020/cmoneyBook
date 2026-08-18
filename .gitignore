@@ -1,5 +1,6 @@
 # dependencies
 node_modules/
+**/node_modules/
 
 # env files
 .env
@@ -9,6 +10,7 @@ node_modules/
 # build
 dist/
 build/
+client/dist/
 
 # IDE
 .vscode/

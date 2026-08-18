@@ -8,7 +8,12 @@ import { errorHandler } from './middleware/errorHandler.js';
 
 const app = express();
 
-app.use(cors({ origin: 'http://localhost:5173', credentials: true }));
+const allowedOrigin = process.env.ALLOWED_ORIGIN || '*';
+app.use(cors({
+    origin: allowedOrigin === '*' ? '*' : allowedOrigin.split(','),
+    credentials: allowedOrigin !== '*',
+}));
+
 app.use(express.json());
 
 // Routes
