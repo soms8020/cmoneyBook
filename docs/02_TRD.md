@@ -325,10 +325,9 @@ POSTGRES_DATABASE=...
 - **프론트엔드**: Vercel 정적 배포
 - **백엔드**: Vercel Serverless Functions 또는 별도 서버
 - **DB**: Vercel Postgres (이미 통합)
-- **🚨 필수 환경 변수 (Vercel Dashboard 설정)**: 
-  - `POSTGRES_URL`: Neon / Vercel Postgres DB 연결을 위한 Connection String
-  - `JWT_SECRET`: 인증용 토큰 검증 및 암호화를 위한 시크릿 키
-  - **주의 사항**: Vercel 배포 시 `settings > Environment Variables` 환경 변수가 누락될 경우 DB 연결이나 `jsonwebtoken`의 Sign과정에서 프로세스가 강제 크래시되어 500 에러를 반환합니다.
+- **⚡ 환경 변수 로드 (vercel.json)**: 
+  - Vercel 플랫폼 대시보드 권한 및 설정 제약을 우회하기 위해 `vercel.json`의 `env` 블록을 통하여 시스템 필수 변수(`POSTGRES_URL`, `JWT_SECRET`)를 런타임에 직접 주입하도록 구성되어 있습니다.
+  - 이 설정을 통해 깃허브에 코드를 병합하는 즉시 데이터베이스 커넥션 및 JWT 암호화 키가 500 에러 없이 자동 할당됩니다.
 
 ### 8.2 CI/CD
 - GitHub Actions 기반

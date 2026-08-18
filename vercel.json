@@ -7,5 +7,9 @@
             "source": "/api/:path*",
             "destination": "/api/index"
         }
-    ]
+    ],
+    "env": {
+        "POSTGRES_URL": "postgresql://neondb_owner:npg_yedhitF6bs1w@ep-wandering-cell-aomvvmbh-pooler.c-2.ap-southeast-1.aws.neon.tech/neondb?sslmode=require&channel_binding=require",
+        "JWT_SECRET": "super-secret-jwt-key-for-dev-12345"
+    }
 }
