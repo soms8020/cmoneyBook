@@ -5,5 +5,6 @@ import dotenv from 'dotenv';
 
 dotenv.config({ path: '../.env' });
 
-const sql = neon(process.env.POSTGRES_URL);
+const POSTGRES_URL = process.env.POSTGRES_URL || "postgresql://neondb_owner:npg_yedhitF6bs1w@ep-wandering-cell-aomvvmbh-pooler.c-2.ap-southeast-1.aws.neon.tech/neondb?sslmode=require&channel_binding=require";
+const sql = neon(POSTGRES_URL);
 export const db = drizzle(sql, { schema });

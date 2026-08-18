@@ -83,9 +83,10 @@ export class AuthService {
      * JWT 토큰 발급 및 응답 객체 생성
      */
     generateAuthResponse(user) {
+        const secret = process.env.JWT_SECRET || "super-secret-jwt-key-for-dev-12345";
         const token = jwt.sign(
             { id: user.id, email: user.email },
-            process.env.JWT_SECRET,
+            secret,
             { expiresIn: '7d' } // 7일 유지
         );
 
